@@ -1,4 +1,10 @@
 
+'use strict';
+
+// ==========================================
+// 1. MOBILE NAVIGATION MENU
+// ==========================================
+
 const menuButton = document.getElementById('menuButton');
 const navLinks = document.getElementById('navLinks');
 
@@ -6,103 +12,151 @@ function closeMenu() {
     if (!navLinks || !menuButton) return;
 
     navLinks.classList.remove('open');
+
     menuButton.setAttribute('aria-expanded', 'false');
-    menuButton.textContent = '☰';
     menuButton.setAttribute('aria-label', 'Open navigation');
+    menuButton.textContent = '☰';
 }
 
 if (menuButton && navLinks) {
     menuButton.addEventListener('click', () => {
-        const open = navLinks.classList.toggle('open');
+        const isOpen = navLinks.classList.toggle('open');
 
-        menuButton.setAttribute('aria-expanded', String(open));
-        menuButton.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
-        menuButton.textContent = open ? '✕' : '☰';
+        menuButton.setAttribute('aria-expanded', String(isOpen));
+        menuButton.setAttribute(
+            'aria-label',
+            isOpen ? 'Close navigation' : 'Open navigation'
+        );
+
+        menuButton.textContent = isOpen ? '✕' : '☰';
     });
 
-    navLinks.querySelectorAll('a').forEach(a =>
-        a.addEventListener('click', closeMenu)
-    );
+    // Close menu after clicking navigation links
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', closeMenu);
+    });
 }
 
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeMenu();
+// Close menu using Escape key
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+        closeMenu();
+    }
 });
 
-document.addEventListener('click', e => {
-    const target = e.target;
+// Close menu when clicking outside navigation
+document.addEventListener('click', event => {
+    const target = event.target;
 
     if (!(target instanceof Element)) return;
-    if (!target.closest('.nav')) closeMenu();
+
+    if (!target.closest('.nav')) {
+        closeMenu();
+    }
 });
 
+
+// ==========================================
+// 2. AUTOMATIC COPYRIGHT YEAR
+// ==========================================
+
 const yearElement = document.getElementById('year');
+
 if (yearElement) {
     yearElement.textContent = new Date().getFullYear();
 }
 
-// for smooth scrolling
+
+// ==========================================
+// 3. SMOOTH NAVIGATION SCROLLING
+// ==========================================
+
+const reducedMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+);
+
+function scrollBehavior() {
+    return reducedMotion.matches ? 'instant' : 'smooth';
+}
 
 document.querySelectorAll('a[href^="#"]').forEach(link => {
-    link.addEventListener('click', function (e) {
-        const href = this.getAttribute('href');
+    link.addEventListener('click', event => {
+        const href = link.getAttribute('href');
 
         if (!href || href === '#') return;
 
-        const target = document.querySelector(href);
+        const target = document.getElementById(
+            decodeURIComponent(href.slice(1))
+        );
 
         if (!target) return;
 
-        e.preventDefault();
+        event.preventDefault();
 
-        const start = window.scrollY;
-        const end = target.getBoundingClientRect().top + start;
-        const distance = end - start;
-        const duration = 250;
-        const startTime = performance.now();
+        target.scrollIntoView({
+            behavior: scrollBehavior(),
+            block: 'start'
+        });
 
-        function animate(time) {
-            const elapsed = time - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const easing = 1 - Math.pow(1 - progress, 3);
-
-            window.scrollTo(0, start + distance * easing);
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        }
-
-        requestAnimationFrame(animate);
+        // Update URL without page reload
         history.pushState(null, '', href);
     });
 });
 
+
+// ==========================================
+// 4. MOBILE SCROLL TO TOP BUTTON
+// ==========================================
+
 const scrollToTopBtn = document.getElementById('scrollToTop');
 
 if (scrollToTopBtn) {
+    let ticking = false;
+
     function updateScrollButton() {
         const isMobile = window.innerWidth < 500;
         const hasScrolled = window.scrollY > 1500;
 
-        scrollToTopBtn.classList.toggle(
-            'visible',
-            isMobile && hasScrolled
-        );
+        const shouldShow = isMobile && hasScrolled;
+
+        // Update only when visibility changes
+        if (
+            scrollToTopBtn.classList.contains('visible') !==
+            shouldShow
+        ) {
+            scrollToTopBtn.classList.toggle(
+                'visible',
+                shouldShow
+            );
+        }
     }
 
-    window.addEventListener('scroll', updateScrollButton, {
+    function requestScrollUpdate() {
+        if (ticking) return;
+
+        ticking = true;
+
+        requestAnimationFrame(() => {
+            updateScrollButton();
+            ticking = false;
+        });
+    }
+
+    // Passive listener for better scrolling performance
+    window.addEventListener('scroll', requestScrollUpdate, {
         passive: true
     });
 
-    window.addEventListener('resize', updateScrollButton);
+    window.addEventListener('resize', requestScrollUpdate);
 
+    // Smoothly return to top
     scrollToTopBtn.addEventListener('click', () => {
         window.scrollTo({
             top: 0,
-            behavior: 'smooth'
+            behavior: scrollBehavior()
         });
     });
 
+    // Check initial position on page load
     updateScrollButton();
 }
