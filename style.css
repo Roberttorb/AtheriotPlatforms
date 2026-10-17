@@ -1268,3 +1268,31 @@ footer p {
 html {
     scroll-behavior: auto;
 }
+
+.scroll-to-top {
+    display: none;
+    position: fixed;
+    bottom: 85px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+   background: linear-gradient(135deg, #00b4ff, #2563eb);
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Only screens below 500px */
+@media (max-width: 499px) {
+    .scroll-to-top.visible {
+        display: flex;
+    }
+}

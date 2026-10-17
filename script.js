@@ -1,42 +1,55 @@
 
-const menuButton = document.getElementById('menuButton'),
-    navLinks = document.getElementById('navLinks');
+const menuButton = document.getElementById('menuButton');
+const navLinks = document.getElementById('navLinks');
 
 function closeMenu() {
+    if (!navLinks || !menuButton) return;
+
     navLinks.classList.remove('open');
     menuButton.setAttribute('aria-expanded', 'false');
     menuButton.textContent = '☰';
-    menuButton.setAttribute('aria-label', 'Open navigation')
+    menuButton.setAttribute('aria-label', 'Open navigation');
 }
 
-menuButton.addEventListener('click', () => {
-    const open = navLinks.classList.toggle('open');
+if (menuButton && navLinks) {
+    menuButton.addEventListener('click', () => {
+        const open = navLinks.classList.toggle('open');
 
-    menuButton.setAttribute('aria-expanded', String(open));
-    menuButton.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
-    menuButton.textContent = open ? '✕' : '☰'
-});
+        menuButton.setAttribute('aria-expanded', String(open));
+        menuButton.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+        menuButton.textContent = open ? '✕' : '☰';
+    });
 
-navLinks.querySelectorAll('a').forEach(a =>
-    a.addEventListener('click', closeMenu)
-);
+    navLinks.querySelectorAll('a').forEach(a =>
+        a.addEventListener('click', closeMenu)
+    );
+}
 
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeMenu()
+    if (e.key === 'Escape') closeMenu();
 });
 
 document.addEventListener('click', e => {
-    if (!e.target.closest('.nav')) closeMenu()
+    const target = e.target;
+
+    if (!(target instanceof Element)) return;
+    if (!target.closest('.nav')) closeMenu();
 });
 
-document.getElementById('year').textContent = new Date().getFullYear();
-
+const yearElement = document.getElementById('year');
+if (yearElement) {
+    yearElement.textContent = new Date().getFullYear();
+}
 
 // for smooth scrolling
 
 document.querySelectorAll('a[href^="#"]').forEach(link => {
     link.addEventListener('click', function (e) {
-        const target = document.querySelector(this.getAttribute('href'));
+        const href = this.getAttribute('href');
+
+        if (!href || href === '#') return;
+
+        const target = document.querySelector(href);
 
         if (!target) return;
 
@@ -51,7 +64,6 @@ document.querySelectorAll('a[href^="#"]').forEach(link => {
         function animate(time) {
             const elapsed = time - startTime;
             const progress = Math.min(elapsed / duration, 1);
-
             const easing = 1 - Math.pow(1 - progress, 3);
 
             window.scrollTo(0, start + distance * easing);
@@ -62,6 +74,35 @@ document.querySelectorAll('a[href^="#"]').forEach(link => {
         }
 
         requestAnimationFrame(animate);
-        history.pushState(null, '', this.getAttribute('href'));
+        history.pushState(null, '', href);
     });
 });
+
+const scrollToTopBtn = document.getElementById('scrollToTop');
+
+if (scrollToTopBtn) {
+    function updateScrollButton() {
+        const isMobile = window.innerWidth < 500;
+        const hasScrolled = window.scrollY > 1500;
+
+        scrollToTopBtn.classList.toggle(
+            'visible',
+            isMobile && hasScrolled
+        );
+    }
+
+    window.addEventListener('scroll', updateScrollButton, {
+        passive: true
+    });
+
+    window.addEventListener('resize', updateScrollButton);
+
+    scrollToTopBtn.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
+    updateScrollButton();
+}
